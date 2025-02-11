@@ -10,16 +10,16 @@ import UIKit
 fileprivate var containerView: UIView!
 
 extension UIViewController {
-    func presentGFAlertOnMainThread(title: String, message: String, buttonTitle: String) {
+    func presentGFAlertOnMainThread(title: String, message: String, buttonTitle: String, buttonAction: @escaping () -> Void) {
         DispatchQueue.main.async {
-            let alertVC = GFAlertViewController(title: title, message: message, buttonTitle: buttonTitle)
+            let alertVC = GFAlertViewController(title: title, message: message, buttonTitle: buttonTitle, completion: buttonAction)
             alertVC.modalPresentationStyle = .overFullScreen
             alertVC.modalTransitionStyle = .crossDissolve
             self.present(alertVC, animated: true)
         }
     }
     
-    func showLoadingView() {
+    func showFullScreenLoadingView() {
         containerView = UIView(frame: view.bounds)
         view.addSubview(containerView)
         containerView.backgroundColor = .systemBackground
@@ -42,7 +42,7 @@ extension UIViewController {
         activityIndicator.startAnimating()
     }
     
-    func dismissLoadingView() {
+    func dismissFullScreenLoadingView() {
         DispatchQueue.main.async {
             UIView.animate(withDuration: 0.25) {
                 containerView.removeFromSuperview()
@@ -60,7 +60,7 @@ extension UIViewController {
         }
     }
     
-    func hideNavBarLoadingIndicator(animated: Bool) {
+    func dismissNavBarLoadingIndicator(animated: Bool) {
         DispatchQueue.main.async {
             UIView.animate(withDuration: animated ? 0.25 : 0) {
                 self.navigationItem.rightBarButtonItem = nil

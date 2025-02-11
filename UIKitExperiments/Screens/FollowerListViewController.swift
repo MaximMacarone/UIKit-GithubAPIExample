@@ -16,6 +16,7 @@ class FollowerListViewController: UIViewController {
     var username: String!
     var collectionView: UICollectionView!
     var dataSource: UICollectionViewDiffableDataSource<Section, Follower>!
+    var isSearching = false
 
     var followers: [Follower] = []
     var filteredFollowers: [Follower] = []
@@ -66,15 +67,24 @@ class FollowerListViewController: UIViewController {
     }
     
     private func getFollowers(username: String, page: Int) {
-        showNavBarLoadingIndicator(animated: true)
+        if followers.isEmpty {
+            showFullScreenLoadingView()
+        } else {
+            showNavBarLoadingIndicator(animated: true)
+        }
         NetworkManager.shared.getFollowers(for: username, page: page, completion: {[weak self] result in
             guard let self = self else { return }
-            self.hideNavBarLoadingIndicator(animated: true)
+            if self.followers.count < 100 {
+                self.dismissFullScreenLoadingView()
+            } else {
+                self.dismissNavBarLoadingIndicator(animated: true)
+            }
             switch result {
             case .failure(let error):
-                self.presentGFAlertOnMainThread(title: "There was an error", message: error.rawValue, buttonTitle: "Close")
-                DispatchQueue.main.async {
-                    self.navigationController?.popViewController(animated: true)
+                self.presentGFAlertOnMainThread(title: "There was an error", message: error.rawValue, buttonTitle: "Close") {
+                    DispatchQueue.main.async {
+                        self.navigationController?.popViewController(animated: true)
+                    }
                 }
             case .success(let followers):
                 self.followers.append(contentsOf: followers)
@@ -142,6 +152,16 @@ extension FollowerListViewController: UICollectionViewDelegate {
             getFollowers(username: username, page: page)
         }
     }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let followersArray = isSearching ? filteredFollowers : followers
+        let follower = followersArray[indexPath.item]
+        
+        let userInfoVC = UserInfoViewController()
+        let navController = UINavigationController(rootViewController: userInfoVC)
+        
+        present(navController, animated: true)
+    }
 
 }
 
@@ -150,7 +170,7 @@ extension FollowerListViewController: UISearchResultsUpdating {
         guard let filter = searchController.searchBar.text, !filter.isEmpty else {
             return
         }
-        
+        isSearching = true
         filteredFollowers = followers.filter { $0.login.lowercased().contains(filter.lowercased()) }
         updateData(with: filteredFollowers)
     }
@@ -158,6 +178,7 @@ extension FollowerListViewController: UISearchResultsUpdating {
 
 extension FollowerListViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        isSearching = false
         updateData(with: followers)
     }
 }

@@ -25,7 +25,7 @@ class GFAvatarImageView: UIImageView {
         translatesAutoresizingMaskIntoConstraints = false
         
         backgroundColor = .systemGray6
-        tintColor = .label
+        tintColor = .systemBackground
         layer.cornerRadius = 10
         clipsToBounds = true
         image = defaultAvatarImage

@@ -93,7 +93,7 @@ class SearchViewController: UIViewController {
     }
     
     private func showSearchErrorAlert() {
-        presentGFAlertOnMainThread(title: "Provide username", message: "No username was provided. Please type in username in the text field.", buttonTitle: "Try again")
+        presentGFAlertOnMainThread(title: "Provide username", message: "No username was provided. Please type in username in the text field.", buttonTitle: "Try again", buttonAction: {})
     }
     
 }

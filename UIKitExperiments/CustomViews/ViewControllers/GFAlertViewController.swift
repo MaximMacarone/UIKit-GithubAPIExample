@@ -18,12 +18,14 @@ class GFAlertViewController: UIViewController {
     var alertTitle: String?
     var message: String?
     var buttonTitle: String?
+    var completion: (() -> Void)?
     
-    init(title:String, message: String, buttonTitle: String) {
+    init(title:String, message: String, buttonTitle: String, completion: @escaping () -> Void) {
         super.init(nibName: nil, bundle: nil)
         self.alertTitle = title
         self.message = message
         self.buttonTitle = buttonTitle
+        self.completion = completion
     }
     
     required init?(coder: NSCoder) {
@@ -109,7 +111,10 @@ class GFAlertViewController: UIViewController {
     }
     
     @objc private func dismissVC() {
-        dismiss(animated: true)
+        dismiss(animated: true) { [weak self] in
+            guard let self = self else { return }
+            (self.completion ?? {})()
+        }
     }
     
 

@@ -7,7 +7,7 @@
 
 import UIKit
 
-class AvatarImageManager {
+class AvatarImageManager: UserAvatarService {
     static let shared = AvatarImageManager()
     
     private let baseUrl = "https://api.github.com"
