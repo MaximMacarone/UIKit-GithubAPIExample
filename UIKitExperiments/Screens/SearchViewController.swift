@@ -9,6 +9,8 @@ import UIKit
 
 class SearchViewController: UIViewController {
     
+    let followerListViewModelFactory: (String) -> FollowerListViewModel
+    
     let logoImageView = UIImageView()
     let usernameTextField = GFTextField()
     let callToActionButton = GFButton(backgroundColor: .systemIndigo, title: "Find user")
@@ -16,7 +18,16 @@ class SearchViewController: UIViewController {
     var userNameTextFieldIsEmpty: Bool {
         !(usernameTextField.text?.isEmpty ?? true)
     }
-
+    
+    init(followerListViewModelFactory: @escaping (String) -> FollowerListViewModel) {
+        self.followerListViewModelFactory = followerListViewModelFactory
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -79,8 +90,9 @@ class SearchViewController: UIViewController {
             showSearchErrorAlert()
             return
         }
-        let vc = FollowerListViewController()
-        vc.username = usernameTextField.text ?? ""
+        let vc = FollowerListViewController(
+            viewModel: followerListViewModelFactory(usernameTextField.text ?? "")
+        )
         vc.title = usernameTextField.text ?? "Followers"
         
         navigationController?.pushViewController(vc, animated: true)
@@ -94,6 +106,10 @@ class SearchViewController: UIViewController {
     
     private func showSearchErrorAlert() {
         presentGFAlertOnMainThread(title: "Provide username", message: "No username was provided. Please type in username in the text field.", buttonTitle: "Try again", buttonAction: {})
+    }
+    
+    private func configureNavigationBar() {
+        navigationItem.title = "Search"
     }
     
 }

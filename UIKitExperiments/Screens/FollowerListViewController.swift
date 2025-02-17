@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class FollowerListViewController: UIViewController {
     
@@ -13,16 +14,27 @@ class FollowerListViewController: UIViewController {
         case main
     }
     
-    var username: String!
+    // MARK: - properties
+    
+    let viewModel: FollowerListViewModel
+    var subscriptions = Set<AnyCancellable>()
+
     var collectionView: UICollectionView!
     var dataSource: UICollectionViewDiffableDataSource<Section, Follower>!
-    var isSearching = false
-
-    var followers: [Follower] = []
-    var filteredFollowers: [Follower] = []
-    var followersCount: Int!
-    var page = 1
-    var hasMoreFollowers = true
+    
+    // MARK: - init
+    
+    init(viewModel: FollowerListViewModel) {
+        
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: - overrides
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,13 +42,26 @@ class FollowerListViewController: UIViewController {
         configureViewController()
         configureCollectionView()
         configureSearchController()
-        getFollowers(username: username, page: page)
         configureDataSource()
+        сonfigureSubscriptions()
+        
+        viewModel.statePublisher.send(.viewDidLoad)
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        configureNavigationBar()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+    }
+    
+    // MARK: - UI configuration
+    
+    private func configureNavigationBar() {
         navigationController?.setNavigationBarHidden(false, animated: true)
-        
     }
     
     func configureViewController() {
@@ -66,42 +91,46 @@ class FollowerListViewController: UIViewController {
         
     }
     
-    private func getFollowers(username: String, page: Int) {
-        if followers.isEmpty {
-            showFullScreenLoadingView()
-        } else {
-            showNavBarLoadingIndicator(animated: true)
-        }
-        NetworkManager.shared.getFollowers(for: username, page: page, completion: {[weak self] result in
-            guard let self = self else { return }
-            if self.followers.count < 100 {
-                self.dismissFullScreenLoadingView()
-            } else {
-                self.dismissNavBarLoadingIndicator(animated: true)
-            }
-            switch result {
-            case .failure(let error):
-                self.presentGFAlertOnMainThread(title: "There was an error", message: error.rawValue, buttonTitle: "Close") {
-                    DispatchQueue.main.async {
-                        self.navigationController?.popViewController(animated: true)
-                    }
-                }
-            case .success(let followers):
-                self.followers.append(contentsOf: followers)
-                if followers.count < 100 { self.hasMoreFollowers = false }
-                
-                if self.followers.isEmpty {
-                    let message = "\(username) doesn't have any followers yet. Go follow them!"
-                    DispatchQueue.main.async {
-                        self.showEmptyStateView(in: self.view, message: message)
-                    }
-                    return
-                }
-                
-                self.updateData(with: self.followers)
-            }
-        })
+    // MARK: - subscriptions
+    
+    private func сonfigureSubscriptions() {
+        configureFollowersSubscription()
+        configureIsLoadingSubscription()
     }
+    
+    private func configureFollowersSubscription() {
+        viewModel.followersPublisher
+            .sink { [unowned self] completion in
+                switch completion {
+                case .failure(let error):
+                    self.presentGFAlertOnMainThread(title: "There was an error", message: error.rawValue, buttonTitle: "Close") {
+                        DispatchQueue.main.async {
+                            self.navigationController?.popViewController(animated: true)
+                        }
+                    }
+                case .finished:
+                    print("viewModel.followers finished")
+                }
+            } receiveValue: { [unowned self] followers in
+                self.updateData(with: followers)
+            }
+            .store(in: &subscriptions)
+    }
+    
+    private func configureIsLoadingSubscription() {
+        viewModel.isLoadingPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] isLoading in
+                if isLoading {
+                    showNavBarLoadingIndicator(animated: true)
+                } else {
+                    dismissNavBarLoadingIndicator(animated: true)
+                }
+            }
+            .store(in: &subscriptions)
+    }
+    
+    // MARK: - methods
     
     private func configureDataSource() {
         dataSource = UICollectionViewDiffableDataSource<Section, Follower>(collectionView: collectionView, cellProvider: {
@@ -122,40 +151,26 @@ class FollowerListViewController: UIViewController {
     }
 }
 
+// MARK: - extensions
+
 extension FollowerListViewController: UICollectionViewDelegate {
-//    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-//        let offsetY = scrollView.contentOffset.y
-//        let contentHeight = scrollView.contentSize.height
-//        let frameHeight = scrollView.frame.height
-//        
-//        if offsetY + frameHeight == contentHeight {
-//            guard hasMoreFollowers else { return }
-//            page += 1
-//            getFollowers(username: username, page: page)
-//        }
-//    }
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        print("scrollViewDidEndDecelerating")
         
         let offsetY = scrollView.contentOffset.y
         let contentHeight = scrollView.contentSize.height
         let frameHeight = scrollView.frame.height
         
-        print(offsetY)
-        print(contentHeight)
-        print(frameHeight)
-        
         if offsetY + frameHeight >= contentHeight {
-            guard hasMoreFollowers else { return }
-            page += 1
-            getFollowers(username: username, page: page)
+            if viewModel.hasMoreFollowers {
+                viewModel.statePublisher.send(.scrollViewDidEndDecelerating)
+            }
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let followersArray = isSearching ? filteredFollowers : followers
-        let follower = followersArray[indexPath.item]
+        let follower = viewModel.followersPublisher.value[indexPath.item]
+        print("did select \(follower.login)")
         
         let userInfoVC = UserInfoViewController()
         let navController = UINavigationController(rootViewController: userInfoVC)
@@ -167,18 +182,22 @@ extension FollowerListViewController: UICollectionViewDelegate {
 
 extension FollowerListViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
-        guard let filter = searchController.searchBar.text, !filter.isEmpty else {
-            return
-        }
-        isSearching = true
-        filteredFollowers = followers.filter { $0.login.lowercased().contains(filter.lowercased()) }
-        updateData(with: filteredFollowers)
+        
+//        updateData(with: filteredFollowers)
     }
 }
 
 extension FollowerListViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        isSearching = false
-        updateData(with: followers)
+        viewModel.statePublisher.send(.searchDidEnd)
+//        updateData(with: followers)
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        viewModel.statePublisher.send(.searchWillStart)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        viewModel.searchFilter.send(searchText)
     }
 }

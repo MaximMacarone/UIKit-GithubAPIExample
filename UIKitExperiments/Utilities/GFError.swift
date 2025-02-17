@@ -8,6 +8,7 @@
 import Foundation
 
 enum GFError: String, Error {
+    case badURL = "URL is invalid."
     case badUsername = "User not found. Check username and try again."
     case badConnection = "Unable to complete your request. Please check your internet connection."
     case badRequest = "Server responded with an error. Please try again later."
