@@ -9,8 +9,7 @@ import UIKit
 
 class SearchViewController: UIViewController {
     
-    let followerListViewModelFactory: (String) -> FollowerListViewModel
-    let userInfoViewModelFactory: (String) -> UserInfoViewModel
+    let followerListVCFactory: (String) -> FollowerListViewController
     
     let logoImageView = UIImageView()
     let usernameTextField = GFTextField()
@@ -21,11 +20,9 @@ class SearchViewController: UIViewController {
     }
     
     init(
-        followerListViewModelFactory: @escaping (String) -> FollowerListViewModel,
-        userInfoViewModelFactory: @escaping (String) -> UserInfoViewModel
+        followerListVCFactory: @escaping (String) -> FollowerListViewController
     ) {
-        self.followerListViewModelFactory = followerListViewModelFactory
-        self.userInfoViewModelFactory = userInfoViewModelFactory
+        self.followerListVCFactory = followerListVCFactory
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -95,9 +92,7 @@ class SearchViewController: UIViewController {
             showSearchErrorAlert()
             return
         }
-        let vc = FollowerListViewController(
-            viewModel: followerListViewModelFactory(usernameTextField.text ?? ""), userInfoViewModelFactory: userInfoViewModelFactory
-        )
+        let vc = followerListVCFactory(usernameTextField.text ?? "")
         vc.title = usernameTextField.text ?? "Followers"
         
         navigationController?.pushViewController(vc, animated: true)

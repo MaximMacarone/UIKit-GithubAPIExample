@@ -15,14 +15,14 @@ class UserInfoViewController: UIViewController {
     let viewModel: UserInfoViewModel
     private var subscriptions = Set<AnyCancellable>()
     
+    let userInfoHeaderVCFactory: (User) -> UserInfoHeaderViewController
     let headerView = UIView()
-    
     
     // MARK: - init
     
-    init(viewModel: UserInfoViewModel) {
+    init(viewModel: UserInfoViewModel, userInfoHeaderVCFactory: @escaping (User) -> UserInfoHeaderViewController) {
         self.viewModel = viewModel
-        
+        self.userInfoHeaderVCFactory = userInfoHeaderVCFactory
         super.init(nibName: nil, bundle: nil)
     }
     

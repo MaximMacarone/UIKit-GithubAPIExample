@@ -23,8 +23,7 @@ class DependencyFactory {
     
     func makeSearchViewNavigationController() -> UINavigationController {
         let searchVC = SearchViewController(
-            followerListViewModelFactory: self.makeFollowerListViewModel,
-            userInfoViewModelFactory: self.makeUserInfoViewModel
+            followerListVCFactory: self.makeFollowerListViewController
         )
         searchVC.title = "Search"
         let navigationController = GFNavigationController(rootViewController: searchVC)
@@ -45,7 +44,7 @@ class DependencyFactory {
         let viewModel = makeFollowerListViewModel(username: username)
         
         let followerListVC = FollowerListViewController(
-            viewModel: viewModel, userInfoViewModelFactory: self.makeUserInfoViewModel
+            viewModel: viewModel, userInfoVCFactory: self.makeUserInfoViewController
         )
         followerListVC.title = "Followers"
         
@@ -74,9 +73,11 @@ class DependencyFactory {
         return userInfoVM
     }
     
-    func makeUserInfoViewController(username: String) -> UserInfoViewController {
+    func makeUserInfoViewController(
+        username: String
+    ) -> UserInfoViewController {
         let userInfoVM = makeUserInfoViewModel(username: username)
-        let userInfoVC = UserInfoViewController(viewModel: userInfoVM)
+        let userInfoVC = UserInfoViewController(viewModel: userInfoVM, userInfoHeaderVCFactory: makeUserInfoHeaderVC)
         
         return userInfoVC
     }
@@ -87,11 +88,8 @@ class DependencyFactory {
         return tabBarItem
     }
     
-    
-//    func makeUserInfoHeaderViewController(user: AnyPublisher<User, Never>) -> UserInfoHeaderViewController {
-//        let userInfoVC = UserInfoHeaderViewController(user: <#T##AnyPublisher<User, Never>#>)
-//    }
-    
-    
+    func makeUserInfoHeaderVC(user: User) -> UserInfoHeaderViewController {
+        return UserInfoHeaderViewController(user: user)
+    }
     
 }
