@@ -1,5 +1,5 @@
 //
-//  AvatarImageManager.swift
+//  GithubUserAvatarService.swift
 //  UIKitExperiments
 //
 //  Created by Maxim Makarenkov on 09.02.2025.
@@ -7,8 +7,8 @@
 
 import UIKit
 
-class AvatarImageManager: UserAvatarService {
-    static let shared = AvatarImageManager()
+class GithubUserAvatarService: UserAvatarService {
+    static let shared = GithubUserAvatarService()
     
     private let baseUrl = "https://api.github.com"
     let cache = NSCache<NSString, UIImage>()

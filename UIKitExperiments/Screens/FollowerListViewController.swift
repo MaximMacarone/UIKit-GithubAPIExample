@@ -17,6 +17,7 @@ class FollowerListViewController: UIViewController {
     // MARK: - properties
     
     let viewModel: FollowerListViewModel
+    let userInfoViewModelFactory: (String) -> UserInfoViewModel
     var subscriptions = Set<AnyCancellable>()
 
     var collectionView: UICollectionView!
@@ -24,9 +25,10 @@ class FollowerListViewController: UIViewController {
     
     // MARK: - init
     
-    init(viewModel: FollowerListViewModel) {
-        
+    init(viewModel: FollowerListViewModel, userInfoViewModelFactory: @escaping (String) -> UserInfoViewModel) {
         self.viewModel = viewModel
+        self.userInfoViewModelFactory = userInfoViewModelFactory
+        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -172,7 +174,7 @@ extension FollowerListViewController: UICollectionViewDelegate {
         let follower = viewModel.followersPublisher.value[indexPath.item]
         print("did select \(follower.login)")
         
-        let userInfoVC = UserInfoViewController()
+        let userInfoVC = UserInfoViewController(viewModel: userInfoViewModelFactory(follower.login))
         let navController = UINavigationController(rootViewController: userInfoVC)
         
         present(navController, animated: true)

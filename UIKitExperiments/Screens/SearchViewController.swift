@@ -10,6 +10,7 @@ import UIKit
 class SearchViewController: UIViewController {
     
     let followerListViewModelFactory: (String) -> FollowerListViewModel
+    let userInfoViewModelFactory: (String) -> UserInfoViewModel
     
     let logoImageView = UIImageView()
     let usernameTextField = GFTextField()
@@ -19,8 +20,12 @@ class SearchViewController: UIViewController {
         !(usernameTextField.text?.isEmpty ?? true)
     }
     
-    init(followerListViewModelFactory: @escaping (String) -> FollowerListViewModel) {
+    init(
+        followerListViewModelFactory: @escaping (String) -> FollowerListViewModel,
+        userInfoViewModelFactory: @escaping (String) -> UserInfoViewModel
+    ) {
         self.followerListViewModelFactory = followerListViewModelFactory
+        self.userInfoViewModelFactory = userInfoViewModelFactory
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -91,7 +96,7 @@ class SearchViewController: UIViewController {
             return
         }
         let vc = FollowerListViewController(
-            viewModel: followerListViewModelFactory(usernameTextField.text ?? "")
+            viewModel: followerListViewModelFactory(usernameTextField.text ?? ""), userInfoViewModelFactory: userInfoViewModelFactory
         )
         vc.title = usernameTextField.text ?? "Followers"
         

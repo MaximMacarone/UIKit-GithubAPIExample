@@ -67,7 +67,7 @@ class FollowerListViewModel: ObservableObject {
 
                 case .searchDidEnd:
                     print("searchDidEnd")
-
+                    self.followersPublisher.send(self.allFollowersPublisher.value)
                 }
             }
             .store(in: &subscriptions)

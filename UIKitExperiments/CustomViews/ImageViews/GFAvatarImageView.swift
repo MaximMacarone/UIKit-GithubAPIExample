@@ -9,7 +9,7 @@ import UIKit
 
 class GFAvatarImageView: UIImageView {
     
-    let cache = AvatarImageManager.shared.cache
+    let cache = GithubUserAvatarService.shared.cache
     var defaultAvatarImage = UIImage(systemName: "person.fill")
 
     override init(frame: CGRect) {

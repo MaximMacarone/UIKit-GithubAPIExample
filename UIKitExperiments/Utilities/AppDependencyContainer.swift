@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class AppDependencyContainer {
     
@@ -22,7 +23,8 @@ class DependencyFactory {
     
     func makeSearchViewNavigationController() -> UINavigationController {
         let searchVC = SearchViewController(
-            followerListViewModelFactory: self.makeFollowerListViewModel
+            followerListViewModelFactory: self.makeFollowerListViewModel,
+            userInfoViewModelFactory: self.makeUserInfoViewModel
         )
         searchVC.title = "Search"
         let navigationController = GFNavigationController(rootViewController: searchVC)
@@ -43,7 +45,7 @@ class DependencyFactory {
         let viewModel = makeFollowerListViewModel(username: username)
         
         let followerListVC = FollowerListViewController(
-            viewModel: viewModel
+            viewModel: viewModel, userInfoViewModelFactory: self.makeUserInfoViewModel
         )
         followerListVC.title = "Followers"
         
@@ -66,37 +68,30 @@ class DependencyFactory {
         return followerListVM
     }
     
+    func makeUserInfoViewModel(username: String) -> UserInfoViewModel {
+        let userInfoVM = UserInfoViewModel(username: username, networkService: sharedNetworkService)
+        
+        return userInfoVM
+    }
+    
+    func makeUserInfoViewController(username: String) -> UserInfoViewController {
+        let userInfoVM = makeUserInfoViewModel(username: username)
+        let userInfoVC = UserInfoViewController(viewModel: userInfoVM)
+        
+        return userInfoVC
+    }
+    
     func makeUITabBarItem(tabBarSystemItem: UITabBarItem.SystemItem) -> UITabBarItem {
         let tabBarItem = UITabBarItem(tabBarSystemItem: tabBarSystemItem, tag: tagCounter)
         tagCounter += 1
         return tabBarItem
     }
+    
+    
+//    func makeUserInfoHeaderViewController(user: AnyPublisher<User, Never>) -> UserInfoHeaderViewController {
+//        let userInfoVC = UserInfoHeaderViewController(user: <#T##AnyPublisher<User, Never>#>)
+//    }
+    
+    
+    
 }
-
-
-//private func createSearchNavigationController() -> UIViewController {
-//    let vc = SearchViewController()
-//    vc.title = "Search"
-//    vc.tabBarItem = UITabBarItem(tabBarSystemItem: .search, tag: 0)
-//    
-//    return UINavigationController(rootViewController: vc)
-//}
-
-//private func createFavoritesNavigationController() -> UINavigationController {
-//    let vc = FavoritesViewController()
-//    vc.title = "Favorites"
-//    vc.tabBarItem = UITabBarItem(tabBarSystemItem: .favorites, tag: 1)
-//    
-//    return UINavigationController(rootViewController: vc)
-//}
-
-//private func createTabBarController() -> UITabBarController {
-//    let tabBarController = GFTabBarController()
-//    
-//    let searchNavController = createSearchNavigationController()
-//    let favoritesNavController = createFavoritesNavigationController()
-//    
-//    tabBarController.viewControllers = [searchNavController, favoritesNavController]
-//    
-//    return tabBarController
-//}
